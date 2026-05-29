@@ -2,8 +2,9 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 
 export async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
     try {
+        const protectedPaths = ["/catalog", "/materials", "/projects"];
 
-        if(request.url.startsWith("/check") || request.url.startsWith("/auth") || request.url.startsWith("/docs") || request.url.startsWith("/openapi.json") || request.url.startsWith("/uploads")) return;
+        if (!protectedPaths.some((path) => request.url.startsWith(path))) return;
 
         await request.jwtVerify();
     } catch {

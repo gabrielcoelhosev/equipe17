@@ -1,6 +1,7 @@
 import fastify from "fastify";
 import cors from "@fastify/cors";
-import { createReadStream } from "node:fs";
+import fastifyStatic from "@fastify/static";
+import { createReadStream, existsSync } from "node:fs";
 import path from "node:path";
 import { ZodError } from "zod";
 import { routes } from "./routes/index.js";
@@ -10,9 +11,18 @@ import { logger } from "./middlewares/logger.js";
 import docsPlugin from "./plugins/docs.js";
 
 export const app = fastify();
+const frontendDist = path.resolve(process.cwd(), "frontend", "dist", "gbriel-study-frontend", "browser");
+
 app.register(cors, {
     origin: true,
 });
+if (existsSync(frontendDist)) {
+    app.register(fastifyStatic, {
+        root: frontendDist,
+        prefix: "/",
+        wildcard: false,
+    });
+}
 app.register(jwtplugin);
 app.register(docsPlugin);
 app.setErrorHandler((error, _request, reply) => {
@@ -43,3 +53,12 @@ app.get("/uploads/:folder/:file", async (request, reply) => {
     return reply.send(createReadStream(filePath));
 });
 app.register(routes);
+if (existsSync(frontendDist)) {
+    app.setNotFoundHandler((request, reply) => {
+        if (request.method === "GET") {
+            return reply.sendFile("index.html");
+        }
+
+        return reply.status(404).send({ message: "Rota nao encontrada" });
+    });
+}

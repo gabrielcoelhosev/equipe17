@@ -46,7 +46,7 @@ export type LoginResult = {
   };
 };
 
-const API_URL = 'http://localhost:3333';
+const API_URL = window.location.port === '4200' ? 'http://localhost:3333' : '';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
