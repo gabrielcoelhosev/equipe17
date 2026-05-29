@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build:vercel",
+  "outputDirectory": "frontend/dist/gbriel-study-frontend/browser",
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/auth/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/catalog/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/materials/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/projects/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/check",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/docs",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/uploads/(.*)",
+      "destination": "/api/index"
+    }
+  ]
+}
