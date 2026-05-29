@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model user {
+  id         Int      @id @default(autoincrement())
+  name       String?
+  email      String   @unique
+  password   String
+  created_at DateTime @default(now())
+
+  materials studyMaterial[]
+  subjects  studySubject[]
+  types     studyMaterialType[]
+}
+
+model studySubject {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  name       String
+  created_at DateTime @default(now())
+
+  user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, name])
+  @@index([user_id])
+}
+
+model studyMaterialType {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  name       String
+  created_at DateTime @default(now())
+
+  user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, name])
+  @@index([user_id])
+}
+
+model studyMaterial {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  subject       String
+  material_type String
+  context_text  String
+  note_text     String?
+  file_url      String?
+  file_name     String?
+  file_mime     String?
+  audio_url     String?
+  audio_name    String?
+  audio_mime    String?
+  search_text   String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model project {
+  id                Int      @id @default(autoincrement())
+  title             String
+  short_description String
+  description       String
+  thumbail_url      String?  @unique
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  link  projectLink[]
+  stack projectStack[]
+}
+
+model stack {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  project projectStack[]
+}
+
+model projectStack {
+  projectId Int
+  stackId   Int
+
+  project project @relation(fields: [projectId], references: [id])
+  stack   stack   @relation(fields: [stackId], references: [id])
+
+  @@id([projectId, stackId])
+}
+
+model projectLink {
+  id Int @id @default(autoincrement())
+
+  project_id Int
+
+  type    linkType
+  label   String
+  url     String
+  project project? @relation(fields: [project_id], references: [id])
+}
+
+enum linkType {
+  FRONTEND
+  BACKEND
+  DEMO
+  FIGMA
+  DOCS
+  YOUTUBE
+}

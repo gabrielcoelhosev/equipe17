@@ -1,0 +1,310 @@
+<main class="shell">
+  <section class="hero">
+    <div>
+      <h1>Study Dump</h1>
+      <p class="hero-copy">
+        Capture rapido agora. Encontre com contexto depois.
+      </p>
+    </div>
+
+    @if (isLogged()) {
+      <div class="session">
+        <span>{{ userEmail() }}</span>
+        <button pButton type="button" icon="pi pi-sign-out" severity="secondary" text rounded (click)="logout()"></button>
+      </div>
+    }
+  </section>
+
+  @if (notice()) {
+    <div class="notice" [class]="notice()?.tone">
+      {{ notice()?.text }}
+    </div>
+  }
+
+  @if (!isLogged()) {
+    <section class="auth-page">
+      <section class="auth-panel">
+        <div class="auth-heading">
+          <h2>{{ authMode === 'login' ? 'Entrar' : 'Criar conta' }}</h2>
+          <p>{{ authMode === 'login' ? 'Acesse seus dumps de estudo.' : 'Crie seu acesso para salvar materiais.' }}</p>
+        </div>
+
+        <form class="auth-form" (ngSubmit)="submitAuth()">
+          @if (authMode === 'register') {
+            <label>
+              Nome
+              <input pInputText name="name" [(ngModel)]="auth.name" placeholder="Rafael Silva" autocomplete="name">
+            </label>
+          }
+          <label>
+            Email
+            <input pInputText name="email" [(ngModel)]="auth.email" placeholder="voce@email.com" autocomplete="email" required>
+          </label>
+          <label>
+            Senha
+            <input pInputText name="password" [(ngModel)]="auth.password" placeholder="Sua senha" type="password" autocomplete="current-password" required>
+          </label>
+
+          <button class="auth-submit" pButton type="submit" [label]="authMode === 'login' ? 'Entrar' : 'Cadastrar'" icon="pi pi-arrow-right" iconPos="right" [loading]="loading()"></button>
+        </form>
+
+        <div class="auth-switch">
+          <span>{{ authMode === 'login' ? 'Ainda nao tem conta?' : 'Ja tem conta?' }}</span>
+          <button
+            pButton
+            type="button"
+            severity="secondary"
+            text
+            [label]="authMode === 'login' ? 'Criar conta' : 'Entrar'"
+            (click)="authMode = authMode === 'login' ? 'register' : 'login'"
+          ></button>
+        </div>
+      </section>
+    </section>
+  } @else {
+    <p-tabs value="dump" class="workspace-tabs">
+      <p-tablist>
+        <p-tab value="dump"><i class="pi pi-bolt"></i> Quick Dump</p-tab>
+        <p-tab value="catalog"><i class="pi pi-book"></i> Materias</p-tab>
+        <p-tab value="ask"><i class="pi pi-comments"></i> Perguntar</p-tab>
+      </p-tablist>
+
+      <p-tabpanels>
+        <p-tabpanel value="dump">
+          <section class="grid two">
+            <form class="panel stack" (ngSubmit)="saveDump()">
+              <div class="section-title">
+                <h2>Alimentacao sem esforco</h2>
+                <p>Suba uma foto/PDF ou escreva a frase solta, marque duas tags e salve o contexto.</p>
+              </div>
+
+              <div class="field-row">
+                <label>
+                  Materia
+                  <p-select
+                    name="subject"
+                    [(ngModel)]="dump.subject"
+                    [options]="subjectOptions()"
+                    placeholder="Ex: Custos"
+                    [editable]="true"
+                    appendTo="body"
+                  ></p-select>
+                </label>
+
+                <label>
+                  Tipo
+                  <p-select
+                    name="materialType"
+                    [(ngModel)]="dump.materialType"
+                    [options]="typeOptions()"
+                    placeholder="Ex: Foto da Lousa"
+                    [editable]="true"
+                    appendTo="body"
+                  ></p-select>
+                </label>
+              </div>
+
+              <label class="upload-box">
+                <input type="file" accept="image/*,application/pdf" (change)="onFileChange($event)">
+                <i class="pi pi-cloud-upload"></i>
+                <span>{{ selectedFileName() || 'Foto do quadro ou PDF' }}</span>
+              </label>
+
+              <label>
+                Frase solta
+                <textarea
+                  pTextarea
+                  name="noteText"
+                  [(ngModel)]="dump.noteText"
+                  rows="4"
+                  placeholder="Ex: ponto de equilibrio muda quando separa custo fixo e variavel"
+                ></textarea>
+              </label>
+
+              <label>
+                Contexto rapido
+                <textarea
+                  pTextarea
+                  name="contextText"
+                  [(ngModel)]="dump.contextText"
+                  rows="3"
+                  placeholder="Essa formula serve para calcular o ponto de equilibrio quando a empresa tem custos mistos"
+                  required
+                ></textarea>
+              </label>
+
+              <div class="audio-strip">
+                <button
+                  pButton
+                  type="button"
+                  [icon]="recording() ? 'pi pi-stop-circle' : 'pi pi-microphone'"
+                  [severity]="recording() ? 'danger' : 'secondary'"
+                  [label]="recording() ? 'Parar' : 'Gravar 15s'"
+                  (click)="toggleRecording()"
+                ></button>
+                <span>{{ recording() ? recordSeconds() + 's gravando' : audioName() || 'Audio opcional de contexto' }}</span>
+              </div>
+
+              <button pButton type="submit" label="Salvar dump" icon="pi pi-save" [disabled]="!canSaveDump()" [loading]="loading()"></button>
+            </form>
+
+            <section class="panel stack">
+              <div class="section-title">
+                <h2>Ultimos materiais</h2>
+                <p>O que ja entra na busca por conexao.</p>
+              </div>
+
+              <div class="materials-list compact">
+                @for (material of materials().slice(0, 5); track material.id) {
+                  <article class="material-card">
+                    <div class="material-head">
+                      <div>
+                        <strong>{{ material.subject }}</strong>
+                        <span>{{ material.material_type }}</span>
+                      </div>
+                      <button pButton type="button" icon="pi pi-trash" severity="secondary" text rounded (click)="deleteMaterial(material)"></button>
+                    </div>
+                    <p>{{ material.context_text }}</p>
+                  </article>
+                } @empty {
+                  <p class="empty">Nenhum material salvo ainda.</p>
+                }
+              </div>
+            </section>
+          </section>
+        </p-tabpanel>
+
+        <p-tabpanel value="catalog">
+          <section class="grid two">
+            <div class="panel stack">
+              <div class="section-title">
+                <h2>Materias</h2>
+                <p>Cadastre atalhos para taguear rapido no Quick Dump.</p>
+              </div>
+              <div class="inline-form">
+                <input pInputText [(ngModel)]="newSubject" placeholder="Ex: Custos" name="newSubject">
+                <button pButton type="button" icon="pi pi-plus" label="Adicionar" (click)="addSubject()"></button>
+              </div>
+              <div class="tag-cloud">
+                @for (subject of subjects(); track subject.id) {
+                  <p-tag [value]="subject.name" severity="info"></p-tag>
+                } @empty {
+                  <span class="empty">Sem materias cadastradas.</span>
+                }
+              </div>
+            </div>
+
+            <div class="panel stack">
+              <div class="section-title">
+                <h2>Tipos</h2>
+                <p>Separe formula, slide, lousa, PDF ou anotacao.</p>
+              </div>
+              <div class="inline-form">
+                <input pInputText [(ngModel)]="newType" placeholder="Ex: Formula" name="newType">
+                <button pButton type="button" icon="pi pi-plus" label="Adicionar" (click)="addType()"></button>
+              </div>
+              <div class="tag-cloud">
+                @for (type of types(); track type.id) {
+                  <p-tag [value]="type.name" severity="success"></p-tag>
+                } @empty {
+                  <span class="empty">Sem tipos cadastrados.</span>
+                }
+              </div>
+            </div>
+          </section>
+
+          <section class="panel stack list-panel">
+            <div class="section-title">
+              <h2>Materiais cadastrados</h2>
+              <p>Filtre o acervo antes de perguntar.</p>
+            </div>
+            <div class="field-row filters">
+              <input pInputText [(ngModel)]="listFilters.q" placeholder="Buscar termo" name="filterQ">
+              <p-select [(ngModel)]="listFilters.subject" [options]="subjectOptions()" placeholder="Materia" [showClear]="true" name="filterSubject"></p-select>
+              <p-select [(ngModel)]="listFilters.materialType" [options]="typeOptions()" placeholder="Tipo" [showClear]="true" name="filterType"></p-select>
+              <button pButton type="button" icon="pi pi-search" label="Filtrar" (click)="refreshMaterials()"></button>
+            </div>
+            <div class="materials-list">
+              @for (material of materials(); track material.id) {
+                <article class="material-card rich">
+                  <div class="material-head">
+                    <div>
+                      <strong>{{ material.subject }}</strong>
+                      <span>{{ material.material_type }} • {{ material.created_at | date: 'dd/MM/yyyy HH:mm' }}</span>
+                    </div>
+                    <button pButton type="button" icon="pi pi-trash" severity="secondary" text rounded (click)="deleteMaterial(material)"></button>
+                  </div>
+                  <p>{{ material.context_text }}</p>
+                  @if (material.note_text) {
+                    <blockquote>{{ material.note_text }}</blockquote>
+                  }
+                  <div class="links">
+                    @if (material.file_url) {
+                      <a [href]="fileHref(material)" target="_blank" rel="noreferrer"><i class="pi pi-paperclip"></i> {{ material.file_name || 'Arquivo' }}</a>
+                    }
+                    @if (material.audio_url) {
+                      <audio [src]="audioHref(material)" controls></audio>
+                    }
+                  </div>
+                </article>
+              } @empty {
+                <p class="empty">Nada cadastrado com esses filtros.</p>
+              }
+            </div>
+          </section>
+        </p-tabpanel>
+
+        <p-tabpanel value="ask">
+          <section class="panel stack ask-panel">
+            <div class="section-title">
+              <h2>Busca por conexao</h2>
+              <p>Pergunte como voce lembraria na prova. O app puxa fotos, PDFs, contexto e audio que combinam com o termo.</p>
+            </div>
+
+            <div class="question-bar">
+              <input pInputText [(ngModel)]="question" name="question" placeholder="Ex: Ponto de Equilibrio" (keyup.enter)="ask()">
+              <button pButton type="button" icon="pi pi-send" label="Perguntar" (click)="ask()" [loading]="loading()"></button>
+            </div>
+
+            <div class="answer-strip">
+              @if (questionResults().length) {
+                <strong>Resposta montada pelo seu acervo</strong>
+                <p>
+                  Encontrei {{ questionResults().length }} conexao(oes). Comece pelo contexto salvo e abra os anexos para recuperar a explicacao original.
+                </p>
+              } @else {
+                <p class="empty">Digite um termo para buscar nas suas materias cadastradas.</p>
+              }
+            </div>
+
+            <div class="materials-list">
+              @for (material of questionResults(); track material.id) {
+                <article class="material-card rich">
+                  <div class="material-head">
+                    <div>
+                      <strong>{{ material.subject }}</strong>
+                      <span>{{ material.material_type }} • {{ material.created_at | date: 'dd/MM/yyyy' }}</span>
+                    </div>
+                    <button pButton type="button" icon="pi pi-trash" severity="secondary" text rounded (click)="deleteMaterial(material)"></button>
+                  </div>
+                  <p>{{ material.context_text }}</p>
+                  @if (material.note_text) {
+                    <blockquote>{{ material.note_text }}</blockquote>
+                  }
+                  <div class="links">
+                    @if (material.file_url) {
+                      <a [href]="fileHref(material)" target="_blank" rel="noreferrer"><i class="pi pi-external-link"></i> Abrir {{ material.file_name || 'arquivo' }}</a>
+                    }
+                    @if (material.audio_url) {
+                      <audio [src]="audioHref(material)" controls></audio>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  }
+</main>
