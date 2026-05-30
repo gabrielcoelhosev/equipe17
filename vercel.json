@@ -30,14 +30,6 @@
       "destination": "/api/index"
     },
     {
-      "source": "/docs",
-      "destination": "/api/index"
-    },
-    {
-      "source": "/openapi.json",
-      "destination": "/api/index"
-    },
-    {
       "source": "/uploads/(.*)",
       "destination": "/api/index"
     }

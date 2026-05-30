@@ -24,7 +24,9 @@ if (existsSync(frontendDist)) {
     });
 }
 app.register(jwtplugin);
-app.register(docsPlugin);
+if (process.env.VERCEL !== "1") {
+    app.register(docsPlugin);
+}
 app.setErrorHandler((error, _request, reply) => {
     if (error instanceof ZodError) {
         return reply.status(400).send({
